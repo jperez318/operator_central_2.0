@@ -1,4 +1,4 @@
-from trainingBoard import TrainingBoard
+from training_board import TrainingBoard
 
 board = TrainingBoard()
 board.add_operator("Alice")

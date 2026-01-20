@@ -9,12 +9,14 @@ class TrainingBoard:
     def add_operator(self, name):
         new_operator = Operator(name)
         self.operators[new_operator.id] = new_operator
+        for training in self.trainings.values():            #assign new operator to all trainings
+            training.assign_operator(new_operator.id)
 
     def delete_operator(self, operator_id_given) -> bool:
         if operator_id_given not in self.operators:
             return False
         del self.operators[operator_id_given]
-        for training in self.trainings.values():           #remove operator from all trainings
+        for training in self.trainings.values():            #remove operator from all trainings
             training.remove_operator(operator_id_given)
         return True
 
@@ -33,11 +35,7 @@ class TrainingBoard:
     def toggle_training_priority(self, training_id_given):
         if training_id_given not in self.trainings:
             return False
-        
-        for training_id in self.trainings:
-            if training_id == training_id_given:
-                self.trainings[training_id].priority_flag = not self.trainings[training_id].priority_flag
-                break
+        self.trainings[training_id_given].priority_flag = not self.trainings[training_id_given].priority_flag
 
     def get_trainings(self):
         return list(self.trainings.values())
