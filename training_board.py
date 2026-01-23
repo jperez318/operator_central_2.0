@@ -13,29 +13,31 @@ class TrainingBoard:
 
     def load_from_db(self):
         db = SessionLocal()
+        try:
+            # 1️⃣ Load all operators
+            operators = db.query(Operator).all()
+            self.operators = {op.id: op for op in operators}
 
-        # Loads operators
-        for op in db.query(Operator).all():
-            self.operators[op.id] = op
+            # 2️⃣ Load all trainings
+            trainings = db.query(Training).all()
 
-        # Loads trainings
-        trainings = db.query(Training).all()
-        operators_ids = list(self.operators.keys())
+            # 3️⃣ Load all training statuses
+            status_rows = db.query(Training_Operator_training_Status).all()
+            # Map: training_id -> {operator_id: status}
+            training_status_map = defaultdict(dict)
+            for row in status_rows:
+                training_status_map[row.training_id][row.operator_id] = row.status
 
-        # Loads training statuses
-        status_rows = db.query(Training_Operator_training_Status).all()
-        training_dict = defaultdict(dict)
-        for row in status_rows:
-            training_dict[row.training_id][row.operator_id] = row.status
+            # 4️⃣ Populate each training's operator_statuses properly
+            for training in trainings:
+                training.operator_statuses = {}
+                for op_id in self.operators.keys():
+                    # Use DB value if exists, else default to "not_trained"
+                    training.operator_statuses[op_id] = training_status_map.get(training.id, {}).get(op_id, "not_trained")
+                self.trainings[training.id] = training
 
-        # Populate each training's operator_statuses
-        for training in trainings:
-            training.operator_statuses = {op_id: TrainingStatus.NOT_TRAINED for op_id in operators_ids}
-            if training.id in training_dict:
-                training.operator_statuses.update(training_dict[training.id])
-            self.trainings[training.id] = training
-
-        db.close()
+        finally:
+            db.close()
 
     def add_operator(self, name):
         db = SessionLocal()
