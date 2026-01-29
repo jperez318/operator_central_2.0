@@ -1,27 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>{{ training.name }}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Training Board</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
-    <h1>{{ training.name }}</h1>
 
-    <div class="statuses-container">
-        {% for status in ["not_trained", "trained", "ran_in_workshop", "shadowed", "can_train"] %}
-            <div class="status-card">
-                <h3>{{ status.replace("_", " ").title() }}</h3>
-                <ul>
-                    {% for op_id, op_status in training.operator_statuses.items() %}
-                        {% if op_status == status %}
-                            <li>{{ operators_dict[op_id].name }}</li>
-                        {% endif %}
-                    {% endfor %}
-                </ul>
+<h1>Training Board</h1>
+<button id="save-all-button">Save All Changes</button>
+
+{% for training in trainings %}
+<div class="training" data-training-id="{{ training.id }}">
+  <h2>{{ training.name }}</h2>
+
+  <div class="status-columns">
+    {% for status in ["not_trained", "trained", "ran_in_workshop", "shadowed", "can_train"] %}
+      <div class="status-column" data-status="{{ status }}">
+        <h3>{{ status.replace("_", " ").title() }}</h3>
+
+        {% for op_id, op_status in training.operator_statuses.items() %}
+          {% if op_status == status %}
+            <div class="operator" data-operator-id="{{ op_id }}">
+              {{ operators_dict[op_id].name }}
             </div>
+          {% endif %}
         {% endfor %}
-    </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+<hr>
+{% endfor %}
 
+<script src="{{ url_for('static', filename='js/training.js') }}"></script>
 </body>
 </html>

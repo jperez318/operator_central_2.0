@@ -1,7 +1,8 @@
 from sqlalchemy import Column, Integer, String, Boolean
-from db_setup import Base
+from db_setup import Base, SessionLocal
 import uuid
-from models.training_statuses import TrainingStatus
+from models.training_statuses import TrainingStatus, Training_Operator_training_Status
+from datetime import datetime
 
 class Training(Base):
     __tablename__ = "trainings"
@@ -27,6 +28,31 @@ class Training(Base):
             return False # Should never happen since operators should either be assigned to every training or not assigned at all
         del self.operator_statuses[operator_id]
         return True
+    
+    def update_multiple_operator_statuses(self, updates: dict):
+        """
+        updates: dict of operator_id -> new_status
+        Performs batch DB update with a single session.
+        """
+        db = SessionLocal()
+        for op_id, new_status in updates.items():
+            self.operator_statuses[op_id] = new_status
+
+            row = db.query(Training_Operator_training_Status)\
+                    .filter_by(training_id=self.id, operator_id=op_id).first()
+            if row:
+                row.status = new_status
+                row.date_assigned = datetime.utcnow()
+            else:
+                db.add(Training_Operator_training_Status(
+                    training_id=self.id,
+                    operator_id=op_id,
+                    status=new_status,
+                    date_assigned=datetime.utcnow()
+                ))
+
+        db.commit()
+        db.close()
 
     def reset_operator_statuses(self):
         for operator_id in self.operator_statuses:

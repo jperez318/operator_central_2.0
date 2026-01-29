@@ -87,31 +87,13 @@ class TrainingBoard:
         del self.trainings[training_id]
         return True
 
-    def update_training_status(self, training_id, operator_id, new_status):
-        if training_id not in self.trainings or operator_id not in self.operators:
-            return False
-
-        db = SessionLocal()
-        row = db.query(Training_Operator_training_Status).filter_by(training_id=training_id, operator_id=operator_id).first()
-
-        if row:
-            row.status = new_status
-            row.timestamp = datetime.utcnow()
-        else:
-            new_row = Training_Operator_training_Status(
-                training_id=training_id,
-                operator_id=operator_id,
-                status=new_status,
-                timestamp=datetime.utcnow()
-            )
-            db.add(new_row)
-
-        db.commit()
-        db.close()
-
-        # Update operator status in memory
-        self.trainings[training_id].operator_statuses[operator_id] = new_status
-        return True
+    def update_operator_statuses(self, payload: dict):
+        
+        trainings_updates = payload.get("trainings", {})
+        for training_id_str, operator_updates in trainings_updates.items():
+            training_id = str(training_id_str)
+            if training_id in self.trainings:
+                self.trainings[training_id].update_multiple_operator_statuses(operator_updates)
 
     def toggle_training_priority(self, training_id):
         if training_id not in self.trainings:
