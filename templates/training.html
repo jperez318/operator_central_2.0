@@ -9,7 +9,11 @@
 <body>
 
 <h1>Training Board</h1>
-<button id="save-all-button">Save All Changes</button>
+<div class="toolbar">
+  <button id="add-operator">Add Operator</button>
+  <button id="delete-operator">Delete Operator</button>
+  <button id="save-all-button">Save Changes</button>
+</div>
 
 {% for training in trainings %}
 <div class="training" data-training-id="{{ training.id }}">

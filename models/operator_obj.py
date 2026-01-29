@@ -5,10 +5,10 @@ import uuid
 class Operator(Base):
     __tablename__ = "operators"
 
-    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, nullable=False)
-    op_month_points = Column(Integer, default=0)
-    op_month_points_last_month = Column(Integer, default=0)
+    op_month_points = Column(Integer, default=0, nullable=False)
+    op_month_points_last_month = Column(Integer, default=0, nullable=False)
 
     def reset_month_points(self):
         #Reset this operator's monthly points to 0

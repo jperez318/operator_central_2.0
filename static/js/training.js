@@ -71,3 +71,62 @@ document.addEventListener("DOMContentLoaded", () => {
       });
   });
 });
+
+document.getElementById("add-operator").addEventListener("click", () => {
+  const name = prompt("Enter operator name:");
+  if (!name) return;
+
+  fetch("/operators", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name })
+  })
+  .then(res => res.json())
+  .then(operator => {
+    // Add to NOT TRAINED column of every training
+    document.querySelectorAll(".training").forEach(trainingDiv => {
+      const notTrainedCol = trainingDiv.querySelector(
+        ".status-column[data-status='not_trained']"
+      );
+
+      const opEl = document.createElement("div");
+      opEl.className = "operator";
+      opEl.dataset.operatorId = operator.id;
+      opEl.textContent = operator.name;
+      opEl.draggable = true;
+
+      notTrainedCol.appendChild(opEl);
+    });
+
+    location.reload(); // safest while developing
+  });
+});
+
+let selectedOperator = null;
+
+document.addEventListener("click", e => {
+  if (e.target.classList.contains("operator")) {
+    document.querySelectorAll(".operator")
+      .forEach(op => op.classList.remove("selected"));
+
+    e.target.classList.add("selected");
+    selectedOperator = e.target;
+  }
+});
+
+document.getElementById("delete-operator").addEventListener("click", () => {
+  if (!selectedOperator) {
+    alert("Select an operator first");
+    return;
+  }
+
+  const operatorId = selectedOperator.dataset.operatorId;
+  if (!confirm("Delete this operator?")) return;
+
+  fetch(`/operators/${operatorId}`, { method: "DELETE" })
+    .then(res => res.json())
+    .then(() => {
+      location.reload();
+    });
+});
+

@@ -7,7 +7,7 @@ from datetime import datetime
 class Training(Base):
     __tablename__ = "trainings"
 
-    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, nullable=False)
     amount_of_ops_needed = Column(String, nullable=False)
     time_to_train = Column(String, nullable=False)

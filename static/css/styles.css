@@ -60,3 +60,7 @@
 #save-button:hover {
   background-color: #3367d6;
 }
+
+.operator.selected {
+  outline: 2px solid red;
+}

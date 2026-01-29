@@ -35,10 +35,8 @@ def update_statuses():
     }
     """
     data = request.json
-    #print(data["trainings"][45])  # Debugging line
     for training_id, operator_dict in data.get("trainings", {}).items():
         for operator_id, status in operator_dict.items():
-            # Update DB
             db_status = (
                 db.query(Training_Operator_training_Status)
                 .filter_by(training_id=int(training_id), operator_id=int(operator_id))
@@ -47,14 +45,12 @@ def update_statuses():
             if db_status:
                 db_status.status = status
             else:
-                # If no record exists, create it
-                
                 new_status = Training_Operator_training_Status(
-                    training_id=str(training_id),
+                    training_id=int(training_id),
                     operator_id=int(operator_id),
                     status=status,
-                    date_assigned=datetime.utcnow()  # or datetime.now() depending on your preference
-)
+                    date_assigned=datetime.utcnow()
+                )
                 db.add(new_status)
 
             # Also update in-memory board
@@ -62,10 +58,60 @@ def update_statuses():
             if training:
                 training.update_operator_status(operator_id, status)
 
-    db.commit()  # ✅ Persist all changes
+    db.commit()
     board.load_from_db()
 
     return jsonify({"success": True})
+
+@app.route("/operators", methods=["POST"])
+def add_operator():
+    data = request.json
+    name = data.get("name")
+    if not name:
+        return jsonify({"error": "Name required"}), 400
+
+    db = SessionLocal()
+    try:
+        operator = Operator(name=name)
+        db.add(operator)
+        db.flush()
+        trainings = db.query(Training).all()
+        for training in trainings:
+            status = Training_Operator_training_Status(
+                training_id=training.id,
+                operator_id=operator.id,
+                status="not_trained",
+                date_assigned=datetime.utcnow()
+            )
+            db.add(status)
+        db.commit()
+        return jsonify({
+            "id": operator.id,
+            "name": operator.name
+        })
+
+    finally:
+        db.close()
+        board.load_from_db()
+
+@app.route("/operators/<int:operator_id>", methods=["DELETE"])
+def delete_operator(operator_id):
+    db = SessionLocal()
+    try:
+        db.query(Training_Operator_training_Status)\
+          .filter_by(operator_id=operator_id)\
+          .delete()
+
+        db.query(Operator)\
+          .filter_by(id=operator_id)\
+          .delete()
+
+        db.commit()
+        return jsonify({"success": True})
+
+    finally:
+        db.close()
+        board.load_from_db()
 
 
 if __name__ == "__main__":
